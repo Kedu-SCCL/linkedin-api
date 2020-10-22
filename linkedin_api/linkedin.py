@@ -1404,3 +1404,28 @@ class Linkedin(object):
             self.logger.debug(f"l_posts grew to {len(l_posts)}")
 
         return l_posts, l_urns
+
+    def get_post_by_urn(self, urn):
+        """Get post by its URN
+
+        :param urn: Post URN. Example: 'urn:li:activity:6724440149507231744'
+        :type urn: str
+
+        :param offset: Index to start searching from
+        :type offset: int, optional
+
+        :return: Dict with post attributes, such as content, authot, etc.
+        :rtype: dict
+        """
+        params = {
+            "q": "backendUrnOrNss",
+            "urnOrNss": urn,
+            "moduleKey": "feed-item:desktop",
+        }
+        res = self._fetch(
+            f"/feed/updatesV2",
+            params=params,
+            headers={"accept": "application/vnd.linkedin.normalized+json+2.1"},
+        )
+        l_raw_posts = res.json().get("included", {})
+        return parse_list_raw_posts(l_raw_posts, self.client.LINKEDIN_BASE_URL)[0]
