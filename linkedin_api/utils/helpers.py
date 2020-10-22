@@ -51,13 +51,15 @@ def get_update_old(d_included):
         return "None"
 
 
-def get_update_content(d_included, base_url):
+def get_update_content(d_included, base_url, fetch_reshared):
     """Parse a dict and returns, if present, the post content
 
     :param d_included: a dict, as returned by res.json().get("included", {})
     :type d_raw: dict
     :param base_url: site URL
     :type d_raw: str
+    :param fetch_reshared: Either none or instance of class Linkedin
+    :type fetch_reshared: object
 
     :return: Post content
     :rtype: str
@@ -69,13 +71,17 @@ def get_update_content(d_included, base_url):
     except TypeError:
         # Let's see if its a reshared post...
         try:
-            # TODO: call Linkedin API to fetch that particular post and extract content
             urn = get_urn_from_raw_group_update(d_included["*resharedUpdate"])
-            return f"{base_url}/feed/update/{urn}"
         except KeyError:
             return "IMAGE"
         except TypeError:
             return "None"
+        else:
+            if fetch_reshared:
+                # TODO: refactor to avoid having to pass an instance of class Linkedin
+                return f"[RESHARED]{fetch_reshared.get_post_by_urn(urn)['content']}"
+            else:
+                return f"{base_url}/feed/update/{urn}"
 
 
 def get_update_author_profile(d_included, base_url):
@@ -167,7 +173,7 @@ def parse_list_raw_urns(l_raw_urns):
     return l_urns
 
 
-def parse_list_raw_posts(l_raw_posts, linkedin_base_url):
+def parse_list_raw_posts(l_raw_posts, linkedin_base_url, fetch_reshared=None):
     """Iterates a unsorted list containing post fields and assemble a
     list of dicts, each one of them contains a post
 
@@ -197,7 +203,7 @@ def parse_list_raw_posts(l_raw_posts, linkedin_base_url):
         if old:
             l_posts = append_update_post_field_to_posts_list(i, l_posts, "old", old)
 
-        content = get_update_content(i, linkedin_base_url)
+        content = get_update_content(i, linkedin_base_url, fetch_reshared)
         if content:
             l_posts = append_update_post_field_to_posts_list(
                 i, l_posts, "content", content

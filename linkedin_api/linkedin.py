@@ -1220,7 +1220,7 @@ class Linkedin(object):
             l_raw_urns = res.json().get("data", {}).get("*elements", [])
 
             l_new_posts = parse_list_raw_posts(
-                l_raw_posts, self.client.LINKEDIN_BASE_URL
+                l_raw_posts, self.client.LINKEDIN_BASE_URL, self
             )
             l_posts.extend(l_new_posts)
 
@@ -1384,7 +1384,7 @@ class Linkedin(object):
             l_raw_urns = res.json().get("data", {}).get("*elements", [])
 
             l_new_posts = parse_list_raw_posts(
-                l_raw_posts, self.client.LINKEDIN_BASE_URL
+                l_raw_posts, self.client.LINKEDIN_BASE_URL, self
             )
             l_posts.extend(l_new_posts)
 
