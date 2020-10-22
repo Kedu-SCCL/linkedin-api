@@ -1325,7 +1325,7 @@ class Linkedin(object):
         l_posts, l_urns = self._get_list_group_posts_and_list_group_urns(
             group_id, limit, offset
         )
-        # Re-using the function, but so fat no promoted posts in groups
+        # Re-using the function, but so far no promoted posts in groups
         return get_list_posts_sorted_without_promoted(l_urns, l_posts)
 
     def _get_list_group_posts_and_list_group_urns(
