@@ -63,25 +63,32 @@ def get_update_content(d_included, base_url, fetch_reshared):
 
     :return: Post content
     :rtype: str
+    :return: Boolean indicating if its a reshared update
+    :rtype: bool
     """
+    reshared = False
+    content = ""
     try:
-        return d_included["commentary"]["text"]["text"]
+        content = d_included["commentary"]["text"]["text"]
     except KeyError:
-        return ""
+        pass
     except TypeError:
         # Let's see if its a reshared post...
         try:
             urn = get_urn_from_raw_group_update(d_included["*resharedUpdate"])
         except KeyError:
-            return "IMAGE"
+            content = "IMAGE"
         except TypeError:
-            return "None"
+            content = "None"
         else:
+            reshared = True
             if fetch_reshared:
                 # TODO: refactor to avoid having to pass an instance of class Linkedin
-                return f"[RESHARED]{fetch_reshared.get_post_by_urn(urn)['content']}"
+                content = fetch_reshared.get_post_by_urn(urn)["content"]
             else:
-                return f"{base_url}/feed/update/{urn}"
+                content = f"{base_url}/feed/update/{urn}"
+    finally:
+        return content, reshared
 
 
 def get_update_author_profile(d_included, base_url):
@@ -203,16 +210,17 @@ def parse_list_raw_posts(l_raw_posts, linkedin_base_url, fetch_reshared=None):
         if old:
             l_posts = append_update_post_field_to_posts_list(i, l_posts, "old", old)
 
-        content = get_update_content(i, linkedin_base_url, fetch_reshared)
+        content, reshared = get_update_content(i, linkedin_base_url, fetch_reshared)
         if content:
             l_posts = append_update_post_field_to_posts_list(
                 i, l_posts, "content", content
             )
-
+            l_posts = append_update_post_field_to_posts_list(
+                i, l_posts, "reshared", reshared
+            )
         url = get_update_url(i, linkedin_base_url)
         if url:
             l_posts = append_update_post_field_to_posts_list(i, l_posts, "url", url)
-
     return l_posts
 
 
