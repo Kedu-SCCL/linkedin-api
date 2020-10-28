@@ -21,34 +21,36 @@ class CookieRepository(object):
     TODO: refactor to use http.cookiejar.FileCookieJar
     """
 
-    def __init__(self, cookies_dir=settings.COOKIE_PATH):
-        self.cookies_dir = cookies_dir
-
-    def save(self, cookies, username):
-        self._ensure_cookies_dir()
-        cookiejar_filepath = self._get_cookies_filepath(username)
+    @staticmethod
+    def save(cookies, username):
+        CookieRepository._ensure_cookies_dir()
+        cookiejar_filepath = CookieRepository._get_cookies_filepath(username)
         with open(cookiejar_filepath, "wb") as f:
             pickle.dump(cookies, f)
 
-    def get(self, username):
-        cookies = self._load_cookies_from_cache(username)
+    @staticmethod
+    def get(username):
+        cookies = CookieRepository._load_cookies_from_cache(username)
         if cookies and not CookieRepository._is_token_still_valid(cookies):
             raise LinkedinSessionExpired
 
         return cookies
 
-    def _ensure_cookies_dir(self):
-        if not os.path.exists(self.cookies_dir):
-            os.makedirs(self.cookies_dir)
+    @staticmethod
+    def _ensure_cookies_dir():
+        if not os.path.exists(settings.COOKIE_PATH):
+            os.makedirs(settings.COOKIE_PATH)
 
-    def _get_cookies_filepath(self, username):
+    @staticmethod
+    def _get_cookies_filepath(username):
         """
         Return the absolute path of the cookiejar for a given username
         """
-        return "{}{}.jr".format(self.cookies_dir, username)
+        return "{}{}.jr".format(settings.COOKIE_PATH, username)
 
-    def _load_cookies_from_cache(self, username):
-        cookiejar_filepath = self._get_cookies_filepath(username)
+    @staticmethod
+    def _load_cookies_from_cache(username):
+        cookiejar_filepath = CookieRepository._get_cookies_filepath(username)
         try:
             with open(cookiejar_filepath, "rb") as f:
                 cookies = pickle.load(f)

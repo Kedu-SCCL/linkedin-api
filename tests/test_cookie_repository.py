@@ -23,31 +23,28 @@ def mock_cookies(date=datetime.strptime("2050-05-04", "%Y-%m-%d")):
 
 
 def test_save():
-    repo = CookieRepository()
-    repo.save(mock_cookies(), "testuser")
+    CookieRepository.save(mock_cookies(), "testuser")
     assert True
 
 
 def test_get():
-    repo = CookieRepository()
-    c = repo.get("testuser")
+    c = CookieRepository.get("testuser")
     assert c is not None
     assert c == mock_cookies()
 
 
 def test_get_nonexistent_file():
-    repo = CookieRepository()
-    c = repo.get("ghost")
+    c = CookieRepository.get("ghost")
     assert c is None
 
 
 def test_get_expired():
-    repo = CookieRepository()
-    repo.save(
-        mock_cookies(date=datetime.strptime("2001-05-04", "%Y-%m-%d")), "testuserex"
+    CookieRepository.save(
+        mock_cookies(date=datetime.strptime("2001-05-04", "%Y-%m-%d")),
+        "testuserex",
     )
     try:
-        repo.get("testuserex")
+        CookieRepository.get("testuserex")
         assert False
     except LinkedinSessionExpired:
         assert True
