@@ -261,4 +261,27 @@ def test_get_feed_posts_posts_keys(linkedin):
 
 def test_get_feed_posts_urns_contains_no_duplicated(linkedin):
     l_posts, l_urns = linkedin._get_list_feed_posts_and_list_feed_urns(101)
+    print(l_urns)
     assert len(set([x for x in l_urns if l_urns.count(x) > 1])) == 0
+
+
+def test_get_feed_posts_author_profile_is_valid_url(linkedin):
+    results = linkedin.get_feed_posts(4)
+    """
+    for i in results:
+        assert linkedin.client.session.get(i["author_profile"])
+    """
+    """
+    profile = 'https://www.linkedin.com/in/javierlegido'
+    #profile = 'https://www.linkedin.com/in/patata'
+    error = 'This profile can'
+    response = linkedin.client.session.get(profile)
+    assert response.status_code == 200
+    assert error not in response.text
+    """
+    error_string = "This profile can"
+    results = linkedin.get_feed_posts(4)
+    for i in results:
+        response = linkedin.client.session.get(i["author_profile"])
+        assert response.status_code == 200
+        assert error_string not in response.text

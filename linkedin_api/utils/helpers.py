@@ -113,7 +113,14 @@ def get_update_author_profile(d_included, base_url):
         if "company" in urn:
             return f"{base_url}/company/{urn_id}"
         elif "member" in urn:
-            return f"{base_url}/in/{urn_id}"
+            # Won't work
+            # return f"{base_url}/in/{urn_id}"
+            public_profile_id = (
+                d_included["actor"]["navigationContext"]["actionTarget"]
+                .split("?")[0]
+                .split("/")[-1]
+            )
+            return f"{base_url}/in/{public_profile_id}"
 
 
 def get_update_url(d_included, base_url):
