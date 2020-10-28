@@ -10,7 +10,7 @@ from urllib.parse import urlencode, quote
 from linkedin_api.client import Client
 from linkedin_api.utils.helpers import (
     get_id_from_urn,
-    get_urn_from_raw_group_update,
+    get_urn_from_raw_update,
     get_update_author_name,
     get_update_old,
     get_update_content,
@@ -1190,16 +1190,22 @@ class Linkedin(object):
 
         # 'l_urns' equivalent to other functions 'results' variable
         l_urns = []
+        # We use a counter because on each loop it's possible that some URNs are
+        # not being added to the list. For instance when we find a job post
+        urn_counter = 0
 
         while True:
 
             # when we're close to the limit, only fetch what we need to
-            if limit > -1 and limit - len(l_urns) < count:
-                count = limit - len(l_urns)
+            # if limit > -1 and limit - len(l_urns) < count:
+            if limit > -1 and limit - urn_counter < count:
+                # count = limit - len(l_urns)
+                count = limit - urn_counter
             params = {
                 "count": str(count),
                 "q": "chronFeed",
-                "start": len(l_urns) + offset,
+                # "start": len(l_urns) + offset,
+                "start": urn_counter + offset,
             }
             res = self._fetch(
                 f"/feed/updatesV2",
@@ -1218,24 +1224,28 @@ class Linkedin(object):
             """
             l_raw_posts = res.json().get("included", {})
             l_raw_urns = res.json().get("data", {}).get("*elements", [])
-
+            # l_raw_urns OK, never repeated elements, but sometimes < than params['count']...
+            # urn_counter += len(l_raw_urns)
+            # If we rely in len(l_raw_urns) we will get duplicates
+            urn_counter += int(params["count"])
             l_new_posts = parse_list_raw_posts(
                 l_raw_posts, self.client.LINKEDIN_BASE_URL, self
             )
             l_posts.extend(l_new_posts)
 
-            l_urns.extend(parse_list_raw_urns(l_raw_urns))
+            l_new_urns = parse_list_raw_urns(l_raw_urns)
+            l_urns.extend(l_new_urns)
 
             # break the loop if we're done searching
             # NOTE: we could also check for the `total` returned in the response.
             # This is in data["data"]["paging"]["total"]
             if (
-                (limit > -1 and len(l_urns) >= limit)  # if our results exceed set limit
-                or len(l_urns) / count >= Linkedin._MAX_REPEATED_REQUESTS
+                (limit > -1 and urn_counter >= limit)  # if our results exceed set limit
+                or urn_counter / count >= Linkedin._MAX_REPEATED_REQUESTS
             ) or len(l_raw_urns) == 0:
                 break
 
-            self.logger.debug(f"results grew to {len(l_urns)}")
+            self.logger.debug(f"results grew to {urn_counter}")
 
         return l_posts, l_urns
 

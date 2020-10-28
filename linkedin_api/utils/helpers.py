@@ -7,13 +7,19 @@ def get_id_from_urn(urn):
     return urn.split(":")[3]
 
 
-def get_urn_from_raw_group_update(raw_string):
+def get_urn_from_raw_update(raw_string):
     """
-    Return the URN of a raw group update
+    Return the URN extracting it from a raw update
 
     Example: urn:li:fs_miniProfile:<id>
     Example: urn:li:fs_updateV2:(<urn>,GROUP_FEED,EMPTY,DEFAULT,false)
     """
+    # TODO: determine what's the best option for job posts such as:
+    # urn:li:fs_updateV2:(urn:li:aggregate:(urn:li:jobPosting:2246555717,urn:li:jobPosting:2218837474),MAIN_FEED,EMPTY,DEFAULT,false)
+    # Proper URL will be: https://www.linkedin.com/jobs/view/2246555717/
+    # At the moment keeping it empty
+    if "jobPosting" in raw_string:
+        raise TypeError
     return raw_string.split("(")[1].split(",")[0]
 
 
@@ -75,7 +81,7 @@ def get_update_content(d_included, base_url, fetch_reshared):
     except TypeError:
         # Let's see if its a reshared post...
         try:
-            urn = get_urn_from_raw_group_update(d_included["*resharedUpdate"])
+            urn = get_urn_from_raw_update(d_included["*resharedUpdate"])
         except KeyError:
             content = "IMAGE"
         except TypeError:
@@ -183,7 +189,11 @@ def parse_list_raw_urns(l_raw_urns):
     """
     l_urns = []
     for i in l_raw_urns:
-        l_urns.append(get_urn_from_raw_group_update(i))
+        # At the moment not including URNs of job posts
+        try:
+            l_urns.append(get_urn_from_raw_update(i))
+        except TypeError:
+            pass
     return l_urns
 
 
